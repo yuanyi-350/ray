@@ -976,7 +976,7 @@ lemma small_volume_eq_integral_c (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) (z
     simp only [mul_one, map_one, integrand, ← real_inner_self_eq_norm_sq, Complex.inner,
       ← Complex.ofReal_pow, Complex.mul_conj, Complex.ofReal_re]
   simp only [i.small_volume_eq_integral r1 rs, volume_integral_c, volume_integral,
-    ← MeasureTheory.integral_const_mul, ← Complex.ofRealCLM_apply]
+    ← Complex.ofRealCLM_apply]
   rw [← ContinuousLinearMap.integral_comp_comm]
   · set t : ℂ → ℂ := fun w ↦ w * z
     have tn : ∀ w, ‖t w‖ = ‖w‖ * z := by simp [t, z0.le]
@@ -993,13 +993,19 @@ lemma small_volume_eq_integral_c (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) (z
         simp only [t, u, v, norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_pos z0,
           div_mul_cancel₀ _ z0.ne', div_mul_cancel₀ _ z0', and_true]
     have dt : ∀ w, HasDerivAt t z w := fun w ↦ hasDerivAt_mul_const (z : ℂ)
-    have dt' := fun w ↦ (dt w).hasFDerivAt.restrictScalars ℝ
+    have dt' := fun w ↦ @HasFDerivAt.restrictScalars ℝ _ ℂ _ _ ℂ _ _ _
+      IsScalarTower.right ℂ _ _ _ IsScalarTower.right _ _ _ (dt w).hasFDerivAt
     rw [← ti, MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul (μ := volume)
       (hf' := fun w _ ↦ (dt' w).hasFDerivWithinAt)]
-    · simp only [Real.norm_eq_abs, Complex.real_smul, abs_of_pos z0]
-      apply congr_arg₂ _ rfl
-      ext w
-      simp [ContinuousLinearMap.det, LinearMap.det_restrictScalars, integrand, t, si]
+    · rw [show (ContinuousLinearMap.restrictScalars ℝ (ContinuousLinearMap.toSpanSingleton ℂ ↑z)).det = z ^ 2 by
+        rw [show ContinuousLinearMap.restrictScalars ℝ (ContinuousLinearMap.toSpanSingleton ℂ ↑z) = z • (1 : ℂ →L[ℝ] ℂ) by
+          ext w; change w * (z : ℂ) = z • w; rw [Algebra.smul_def]; simp [mul_comm]]
+        simp [ContinuousLinearMap.det, LinearMap.det_smul]]; simp [Real.norm_eq_abs, abs_of_pos z0]
+      have hs : ∫ x in annulus_cc 0 (r / z) (s / z), z ^ 2 • ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2) = ∫ x in annulus_cc 0 (r / z) (s / z), ((z : ℂ) ^ 2) * ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2) := by refine MeasureTheory.integral_congr_ae ?_; filter_upwards with x; norm_num [Algebra.smul_def]
+      have hi := MeasureTheory.integral_const_mul (μ := volume.restrict (annulus_cc 0 (r / z) (s / z))) ((z : ℂ) ^ 2) (fun x : ℂ ↦ ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2))
+      calc ∫ x in annulus_cc 0 (r / z) (s / z), z ^ 2 • ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2) = ∫ x in annulus_cc 0 (r / z) (s / z), ((z : ℂ) ^ 2) * ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2) := hs
+        _ = ((z : ℂ) ^ 2) * ∫ x in annulus_cc 0 (r / z) (s / z), ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2) := hi
+        _ = ↑z ^ 2 * ∫ w in annulus_cc 0 (r / z) (s / z), i.integrand w ↑z := by apply congr_arg₂ _ rfl; refine MeasureTheory.integral_congr_ae ?_; filter_upwards with w; simp [integrand, t, si]
     · exact measurableSet_annulus_cc
     · exact (mul_left_injective₀ z0').injOn
   · exact i.integrable_sq_norm r1
