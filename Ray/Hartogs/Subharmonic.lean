@@ -235,6 +235,8 @@ theorem AnalyticOnNhd.circle_mean_eq [CompleteSpace H] {f : ℂ → H} {c : ℂ}
   have h := Complex.circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
     Set.countable_empty (Metric.mem_ball_self rp) fa.continuousOn ?_
   · simp_rw [circleIntegral, deriv_circleMap, circleMap_sub_center, smul_smul, mul_comm _ I] at h
+    letI : NormedSpace ℝ H := NormedSpace.complexToReal
+    letI : IsScalarTower ℝ ℂ H := IsScalarTower.complexToReal
     field_simp [circleMap_ne_center rp.ne'] at h
     simp only [intervalIntegral.integral_smul] at h
     rw [mul_assoc, ← smul_smul, IsUnit.smul_left_cancel (Ne.isUnit Complex.I_ne_zero)] at h
@@ -660,8 +662,11 @@ theorem continuousExtend (f : C(Real.Angle, ℂ)) (c : ℂ) (rp : r > 0) : Exten
   have se : ∀ f, f ∈ s.carrier → Extendable f c r := fun f fs ↦ fourierExtend rp fs
   have ce : ∀ f, f ∈ closure s.carrier → Extendable f c r := IsClosed.extendable se rp
   have e : closure s.carrier = s.topologicalClosure.carrier := rfl
-  rw [e, @span_fourier_closure_eq_top _ (fact_iff.mpr Real.two_pi_pos)] at ce
-  apply ce; simp only [Submodule.mem_carrier]; trivial
+  have hs : s.topologicalClosure = ⊤ := by
+    simpa [s] using (@span_fourier_closure_eq_top _ (fact_iff.mpr Real.two_pi_pos))
+  apply ce
+  rw [e, hs]
+  simp
 
 end HarmonicExtension
 
@@ -702,10 +707,11 @@ theorem continuous_to_harmonic_complex {f : ℂ → ℂ} {c : ℂ} {r : ℝ}
   rcases mem_addCircle_iff_abs.mp za' with ⟨t, tz⟩
   have rr : c + r * t.toCircle = z := by rw [← tz, ← hz']; exact rri rp _
   have h := e.b t
-  simp only [ContinuousMap.coe_mk] at h
   nth_rw 2 [← rr]
   rw [← h]
-  simp only [← hf', rr]
+  change f z = f' t
+  rw [← hf']
+  exact congrArg f rr.symm
 
 /-- Continuous functions on the sphere extend to harmonic functions on the ball (`ℝ` case) -/
 theorem continuous_to_harmonic_real {f : ℂ → ℝ} {c : ℂ} {r : ℝ} (fc : ContinuousOn f (sphere c r)) :
@@ -975,7 +981,7 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
   -- Prepare d and c
   intro d dc
   by_cases dz : d = 0
-  · simp only [dz, ge_iff_le, zero_le', imp_true_iff, Filter.eventually_atTop, exists_const]
+  · exact Filter.Eventually.of_forall (fun n z zk => by simp [dz])
   have dp : d > 0 := pos_iff_ne_zero.mpr dz
   have df : d ≠ ⊤ := ne_top_of_lt dc
   have drp : d.toReal > 0 := ENNReal.toReal_pos dz df
