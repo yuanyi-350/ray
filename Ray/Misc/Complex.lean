@@ -116,12 +116,11 @@ lemma AnalyticAt.norm {𝕜 E : Type} [RCLike 𝕜] [NormedAddCommGroup E] [Norm
     AnalyticAt ℝ (fun x ↦ ‖f x‖) x :=
   (Complex.analyticAt_norm f0).comp a.restrictScalars
 
+local notation "lsmul" => fun (_ : Type) (_ : Type) z => z • (1 : ℂ →L[ℝ] ℂ)
 /-- A complex derivative, treated as `ℂ →L[ℝ] → ℂ` -/
 lemma Complex.real_hasFDerivAt {f : ℂ → ℂ} {z : ℂ} {f' : ℂ} (h : HasDerivAt f f' z) :
     HasFDerivAt f (lsmul ℝ ℂ f') z := by
-  convert h.hasFDerivAt.restrictScalars ℝ
-  ext
-  exact mul_comm _ _
+  simpa [Complex.restrictScalars_toSpanSingleton] using h.complexToReal_fderiv
 
 /-- The derivative of `.im` -/
 lemma hasFDerivAt_im {z : ℂ} : HasFDerivAt Complex.im imCLM z := by
@@ -146,13 +145,14 @@ public lemma HasDerivAt.arg {p : ℝ → ℂ} {p' : ℂ} {t : ℝ} (h : HasDeriv
 -/
 
 @[simp] public lemma Complex.algebra_norm (z : ℂ) : Algebra.norm ℝ (z : ℂ) = ‖z‖ ^ 2 := by
-  simp [Algebra.norm_complex_eq, Complex.normSq_eq_norm_sq]
+  exact (Algebra.norm_complex_apply z).trans (Complex.normSq_eq_norm_sq z)
 
 /-- If `f` is complex differentiable at a point, it's `fderiv` determinant is clean -/
 public lemma Complex.fderiv_det {f : ℂ → ℂ} {z : ℂ} (df : DifferentiableAt ℂ f z) :
     (fderiv ℝ f z).det = ‖deriv f z‖ ^ 2 := by
-  have d1 := df.hasDerivAt.hasFDerivAt.restrictScalars ℝ
-  have d2 := (df.restrictScalars ℝ).hasFDerivAt
-  rw [d2.unique d1]
-  simp [ContinuousLinearMap.det, ContinuousLinearMap.coe_restrictScalars, Complex.algebra_norm,
-    LinearMap.det_restrictScalars, LinearMap.det_ring, smul_eq_mul, one_mul]
+  have d1 := df.hasDerivAt.complexToReal_fderiv
+  rw [d1.fderiv, ← Complex.restrictScalars_toSpanSingleton (deriv f z), ContinuousLinearMap.det,
+    ContinuousLinearMap.coe_restrictScalars]
+  simpa [Complex.algebra_norm, LinearMap.det_ring] using
+    (@LinearMap.det_restrictScalars ℝ ℂ ℂ _ _ _ _ _ _ _ (inferInstance : IsScalarTower ℝ ℂ ℂ) _
+      (((ContinuousLinearMap.toSpanSingleton ℂ (deriv f z) : ℂ →L[ℂ] ℂ) : ℂ →ₗ[ℂ] ℂ)))
