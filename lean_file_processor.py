@@ -6,6 +6,8 @@ import sys
 import threading
 from pathlib import Path
 
+from strip_lean_comments import strip_lean_comments_from_file
+
 __all__ = ["FileProcessor"]
 
 
@@ -69,8 +71,7 @@ class FileProcessor:
 
     @staticmethod
     def _has_forbidden_terms(path: str) -> bool:
-        with open(path, "r", encoding="utf-8") as file:
-            content = file.read()
+        content = strip_lean_comments_from_file(path)
         return bool(FORBIDDEN_PATTERN.search(content))
 
     def _git_restore(self, path: str) -> bool:

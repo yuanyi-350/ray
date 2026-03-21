@@ -49,6 +49,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dir",
+        default="CombinatorialGames",
         help="Lean root directory to scan (relative to project root or absolute path)",
     )
     args = parser.parse_args()
