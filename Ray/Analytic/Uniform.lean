@@ -56,9 +56,7 @@ theorem cauchy_bound {f : ℂ → E} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w : 
     _ = π * ‖π‖⁻¹ * (r * r⁻¹) * wr := by ring
     _ = π * π⁻¹ * (r * r⁻¹) * wr := by rw [p3]
     _ = 1 * (r * r⁻¹) * wr := by rw [mul_inv_cancel₀ Real.pi_ne_zero]
-    _ = wr := by
-      have hr : (↑r : ℝ) ≠ 0 := by exact_mod_cast rp.ne'
-      simp [hr]
+    _ = wr := by field_simp; norm_cast; field_simp; simp
 
 theorem circleIntegral_sub {f g : ℂ → E} {c : ℂ} {r : ℝ} (fi : CircleIntegrable f c r)
     (gi : CircleIntegrable g c r) :
@@ -71,17 +69,11 @@ theorem circleIntegral_sub {f g : ℂ → E} {c : ℂ} {r : ℝ} (fi : CircleInt
   generalize hfg : (fun θ : ℝ ↦ deriv (circleMap c r) θ • (f - g) (circleMap c r θ)) = fgc
   have hs : fc - gc = fgc := by
     rw [← hf, ← hg, ← hfg]; funext
-    simp only [Pi.sub_apply, smul_sub]
-  have fci : IntervalIntegrable fc volume 0 (2 * π) := by
-    rw [← hf]
-    convert CircleIntegrable.out fi using 1
-  have gci : IntervalIntegrable gc volume 0 (2 * π) := by
-    rw [← hg]
-    convert CircleIntegrable.out gi using 1
-  have hsi : (∫ θ in 0..2 * π, fc θ) - ∫ θ in 0..2 * π, gc θ = ∫ θ in 0..2 * π, fgc θ := by
-    rw [← hs]; symm; exact intervalIntegral.integral_sub fci gci
-  have hsi' := by simpa [← hf, ← hg, ← hfg] using hsi
-  convert hsi' using 1
+    simp only [deriv_circleMap, Pi.sub_apply, smul_sub]
+  rw [← hs]; clear hfg hs fgc; symm
+  have fci := CircleIntegrable.out fi; rw [hf] at fci
+  have gci := CircleIntegrable.out gi; rw [hg] at gci
+  exact intervalIntegral.integral_sub fci gci
 
 theorem circleMap_nz {c : ℂ} {r : ℝ≥0} {θ : ℝ} (rp : r > 0) : circleMap c r θ - c ≠ 0 := by
   simp only [circleMap_sub_center, Ne, circleMap_eq_center_iff, NNReal.coe_eq_zero]
@@ -166,7 +158,7 @@ theorem analyticOn_ball_radius {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (rp : r >
     rw [← pp] at hp'
     refine hp'.r_le
   · intro y yr
-    rw [Metric.mem_eball] at yr
+    rw [EMetric.ball, Set.mem_setOf] at yr
     rcases exists_between yr with ⟨t, t0, t1⟩
     have t1' : t.toNNReal < r := by
       rw [← WithTop.coe_lt_coe]; exact lt_of_le_of_lt ENNReal.coe_toNNReal_le_self t1
@@ -178,7 +170,7 @@ theorem analyticOn_ball_radius {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (rp : r >
       HasFPowerSeriesAt.eq_formalMultilinearSeries ⟨↑(r / 2), ph⟩ ⟨t.toNNReal, hp'⟩
     rw [← pp] at hp'
     refine hp'.hasSum ?_
-    rw [Metric.mem_eball]
+    rw [EMetric.ball, Set.mem_setOf]
     calc edist y 0
       _ < t := t0
       _ = ↑t.toNNReal := (ENNReal.coe_toNNReal <| ne_top_of_lt t1).symm
