@@ -62,20 +62,15 @@ public lemma Complex.norm_one_sub_cpow_sub_one_le_rpow_sub_one {a : ℝ} (z1 : �
     exact mem_slitPlane_of_near_one (by simp [w1, abs_of_nonneg t0]; linarith)
   trans ‖(1 - x * (1 : ℂ)) ^ (a : ℂ) - 1‖
   · rw [i w w1, i 1 (by simp)]
-    have hnorm : ∀ {u : ℂ}, ‖u‖ = 1 → ‖∫ t in 0..x, (a : ℂ) * (1 - (t : ℂ) * u) ^ (a - 1 : ℂ) * -u‖ = |a| * ‖∫ t in 0..x, (1 - (t : ℂ) * u) ^ (a - 1 : ℂ)‖ := by
-      intro u u1
-      have h : ∫ t in 0..x, (a : ℂ) * ((1 - (t : ℂ) * u) ^ (a - 1 : ℂ) * -u) = (a : ℂ) * ((∫ t in 0..x, (1 - (t : ℂ) * u) ^ (a - 1 : ℂ)) * -u) := by
-        calc _ = (a : ℂ) * ∫ t in 0..x, (1 - (t : ℂ) * u) ^ (a - 1 : ℂ) * -u := by exact intervalIntegral.integral_const_mul (μ := MeasureTheory.volume) (a := 0) (b := x) (r := (a : ℂ)) (f := fun t : ℝ ↦ (1 - (t : ℂ) * u) ^ (a - 1 : ℂ) * -u)
-        _ = (a : ℂ) * ((∫ t in 0..x, (1 - (t : ℂ) * u) ^ (a - 1 : ℂ)) * -u) := by congr 1; exact intervalIntegral.integral_mul_const (μ := MeasureTheory.volume) (a := 0) (b := x) (r := -u) (f := fun t : ℝ ↦ (1 - (t : ℂ) * u) ^ (a - 1 : ℂ))
-      simpa [Complex.norm_mul, norm_neg, u1, mul_assoc] using congrArg norm h
-    rw [hnorm (u := w) w1, hnorm (u := 1) (by simp)]
+    simp only [mul_neg, intervalIntegral.integral_neg, intervalIntegral.integral_mul_const,
+      intervalIntegral.integral_const_mul, norm_neg, Complex.norm_mul, norm_real, Real.norm_eq_abs,
+      w1, mul_one]
     have e : EqOn (fun t : ℝ ↦ (1 - (t : ℂ)) ^ (a - 1 : ℂ)) (fun t ↦ (((1 - t) ^ (a - 1) : ℝ) : ℂ))
         (uIcc 0 x) := by
       intro t ⟨t0, tx⟩
       simp only [x0, inf_of_le_left, sup_of_le_right] at t0 tx ⊢
       rw [Complex.ofReal_cpow (by linarith)]
       simp
-    simp_rw [mul_one] at e ⊢
     rw [intervalIntegral.integral_congr e, intervalIntegral.integral_ofReal, Complex.norm_real]
     refine mul_le_mul_of_nonneg_left ?_ (by bound)
     rw [Real.norm_eq_abs, abs_of_nonneg]
