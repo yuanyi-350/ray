@@ -194,7 +194,9 @@ lemma deriv_div_bound (i : Gronwall f) :
 /-- `z ↦ snap (i.g z)` is injective for large `r` -/
 lemma g_inj (i : Gronwall f) : ∀ᶠ r in atTop, InjOn (fun z ↦ snap (i.g z)) (sphere 0 r) := by
   -- Keep f near 1
-  obtain ⟨a,a0,fs⟩ := Metric.continuousAt_iff.mp (i.fa 0 (by simp)).continuousAt 20⁻¹ (by norm_num)
+  have fa := i.fa 0 (by simp)
+  have fc := Metric.continuousAt_iff.mp fa.continuousAt 20⁻¹ (by norm_num)
+  obtain ⟨a,a0,fs⟩ := fc
   simp only [dist_eq_norm, sub_zero, i.f0] at fs
   -- Prove injectivity via `WindInj`
   obtain ⟨m,m0,em⟩ := i.deriv_div_bound
@@ -293,7 +295,8 @@ lemma g_tendsto (i : Gronwall f) : Tendsto i.g (cobounded ℂ) (cobounded ℂ) :
   use max (2 * r) s⁻¹
   intro z lt
   simp only [sup_lt_iff] at lt
-  specialize @sh z⁻¹ (by simpa using inv_lt_of_inv_lt₀ (by bound) lt.2)
+  have zs := inv_lt_of_inv_lt₀ (by bound) lt.2
+  specialize @sh z⁻¹ (by simpa)
   have f2 : 2⁻¹ ≤ ‖f z⁻¹‖ := by
     calc ‖f z⁻¹‖
       _ = ‖1 + (f z⁻¹ - 1)‖ := by ring_nf
@@ -421,7 +424,8 @@ lemma analyticAt_fe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ (w : WindDiff (i.g
     exact @AnalyticAt.restrictScalars ℝ inferInstance ℂ ℂ inferInstance inferInstance inferInstance
       inferInstance ℂ inferInstance inferInstance inferInstance IsScalarTower.right inferInstance
       IsScalarTower.right i.g (circleMap 0 r t) (i.ga (by simp [abs_of_pos r0, r1]))
-  simpa [Function.comp] using hga.comp (analyticOnNhd_circleMap 0 r t (by simp))
+  have hcm : AnalyticAt ℝ (circleMap 0 r) t := analyticOnNhd_circleMap 0 r t (by simp)
+  simpa [Function.comp] using hga.comp hcm
 
 /-- Eventually, the two notions of spheres coincide -/
 lemma sphere_eq (i : Gronwall f) : ∀ᶠ r in atTop,
@@ -1155,12 +1159,13 @@ lemma volume_one_sum (i : Gronwall f) :
     · use 0; finiteness
   replace tv : Tendsto (fun n ↦ volume.real (i.disk (r n))) atTop (𝓝 (volume.real (i.disk 1))) :=
     (ENNReal.continuousAt_toReal (by finiteness)).tendsto.comp tv
-  have tr : Tendsto r atTop (𝓝 1) := by simpa [r, add_comm] using
-    tendsto_one_div_add_atTop_nhds_zero_nat.const_add (1 : ℝ)
+  have tr : Tendsto r atTop (𝓝 1) := by
+    rw [← add_zero 1]
+    exact tendsto_one_div_add_atTop_nhds_zero_nat.const_add 1
   have rm : ∀ {c}, Tendsto (fun n ↦ c * r n ^ 2) atTop (𝓝 c) := fun {c} ↦ by
-    simpa using (tendsto_const_nhds.mul (tr.pow 2))
+    simpa using tendsto_const_nhds.mul (tr.pow 2)
   have rd : ∀ {c k}, Tendsto (fun n ↦ c / r n ^ k) atTop (𝓝 c) := fun {c k} ↦ by
-    simpa using (tendsto_const_nhds.div (tr.pow k))
+    simpa using tendsto_const_nhds.div (tr.pow k)
   have s := fun n ↦ i.small_volume_sum_nonneg (r1 n)
   have mono : Monotone fun n ↦ i.gronwall_nonneg (r n) := by
     intro n m nm
