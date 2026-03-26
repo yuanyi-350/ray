@@ -62,22 +62,38 @@ public lemma Complex.norm_one_sub_cpow_sub_one_le_rpow_sub_one {a : ℝ} (z1 : �
     exact mem_slitPlane_of_near_one (by simp [w1, abs_of_nonneg t0]; linarith)
   trans ‖(1 - x * (1 : ℂ)) ^ (a : ℂ) - 1‖
   · rw [i w w1, i 1 (by simp)]
-    simp only [mul_neg, intervalIntegral.integral_neg, intervalIntegral.integral_mul_const,
-      intervalIntegral.integral_const_mul, norm_neg, Complex.norm_mul, norm_real, Real.norm_eq_abs,
-      w1, mul_one]
+    simp only [mul_neg, intervalIntegral.integral_neg, norm_neg, mul_assoc, mul_one]
+    have hleft :
+        ‖∫ t in 0..x, (a : ℂ) * ((1 - (t : ℂ) * w) ^ (a - 1 : ℂ) * w)‖ =
+          ‖(a : ℂ) * ∫ t in 0..x, (1 - (t : ℂ) * w) ^ (a - 1 : ℂ) * w‖ := by
+      congr 1
+      exact intervalIntegral.integral_const_mul (r := (a : ℂ)) (a := 0) (b := x)
+        (f := fun t : ℝ ↦ (1 - (t : ℂ) * w) ^ (a - 1 : ℂ) * w)
+    have hright :
+        ‖∫ t in 0..x, (a : ℂ) * (1 - (t : ℂ)) ^ (a - 1 : ℂ)‖ =
+          ‖(a : ℂ) * ∫ t in 0..x, (1 - (t : ℂ)) ^ (a - 1 : ℂ)‖ := by
+      congr 1
+      exact intervalIntegral.integral_const_mul (r := (a : ℂ)) (a := 0) (b := x)
+        (f := fun t : ℝ ↦ (1 - (t : ℂ)) ^ (a - 1 : ℂ))
+    have ha : ‖a‖ = -a := by
+      rw [Real.norm_eq_abs, abs_of_nonpos a0]
+    rw [hleft, hright, Complex.norm_mul, norm_real, Real.norm_eq_abs, abs_of_nonpos a0]
     have e : EqOn (fun t : ℝ ↦ (1 - (t : ℂ)) ^ (a - 1 : ℂ)) (fun t ↦ (((1 - t) ^ (a - 1) : ℝ) : ℂ))
         (uIcc 0 x) := by
       intro t ⟨t0, tx⟩
       simp only [x0, inf_of_le_left, sup_of_le_right] at t0 tx ⊢
       rw [Complex.ofReal_cpow (by linarith)]
       simp
-    rw [intervalIntegral.integral_congr e, intervalIntegral.integral_ofReal, Complex.norm_real]
+    rw [intervalIntegral.integral_congr e, intervalIntegral.integral_ofReal, Complex.norm_mul,
+      Complex.norm_real, ha]
     refine mul_le_mul_of_nonneg_left ?_ (by bound)
-    rw [Real.norm_eq_abs, abs_of_nonneg]
+    rw [Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg]
     · refine intervalIntegral.norm_integral_le_of_norm_le x0 (.of_forall ?_) ?_
       · intro t ⟨t0,tx⟩
-        simp only [(by simp : (a : ℂ) - 1 = (a - 1 : ℝ)), Complex.norm_cpow_real]
-        refine Real.rpow_le_rpow_of_nonpos (by linarith) ?_ (by linarith)
+        simp only [(by simp : (a : ℂ) - 1 = (a - 1 : ℝ)), Complex.norm_mul,
+          Complex.norm_cpow_real, w1, mul_one]
+        have ht1 : 0 < 1 - t := by linarith
+        refine Real.rpow_le_rpow_of_nonpos ht1 ?_ (by linarith)
         calc ‖1 - t * w‖
           _ ≥ ‖(1 : ℂ)‖ - ‖t * w‖ := by bound
           _ = 1 - t := by simp [abs_of_pos t0, w1]
