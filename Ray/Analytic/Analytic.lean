@@ -43,10 +43,11 @@ public lemma AnalyticWithinAt.analyticAt {f : E → F} {s : Set E} {x : E}
   obtain ⟨p, r, fp⟩ := fa
   obtain ⟨e, e0, es⟩ := Metric.mem_nhds_iff.mp xs
   refine ⟨p, min r (.ofReal e),
-    {r_le := by exact le_trans (min_le_left _ _) fp.r_le, r_pos := by exact lt_min fp.r_pos (ENNReal.ofReal_pos.mpr e0), hasSum := fun {y} yr ↦ ?_}⟩
-  rw [Metric.mem_eball, edist_zero_right] at yr
-  have ye : ‖y‖ < e := (ENNReal.ofReal_lt_ofReal_iff e0).mp <| by simpa only [← ofReal_norm] using lt_of_lt_of_le yr (min_le_right r (ENNReal.ofReal e))
-  exact fp.hasSum (.inr (es (by simpa only [Metric.mem_ball, dist_eq_norm, add_sub_cancel_left] using ye))) (by simpa only [Metric.mem_eball, edist_zero_right] using lt_of_lt_of_le yr (min_le_left r (ENNReal.ofReal e)))
+    {r_le := by simp [fp.r_le], r_pos := by simp [fp.r_pos, e0], hasSum := fun {y} yr ↦ ?_}⟩
+  simp only [EMetric.mem_ball, edist_zero_right, lt_inf_iff] at yr
+  obtain ⟨yr, ye⟩ := yr
+  simp only [← ofReal_norm, ENNReal.ofReal_lt_ofReal_iff e0] at ye
+  exact fp.hasSum (.inr (es (by simp [ye]))) (by simp [yr])
 
 /-- Extract `AnalyticAt` from `ContDiffOn 𝕜 ω` if we have a neighborhood -/
 public lemma ContDiffOn.analyticAt {f : E → F} {s : Set E} (fa : ContDiffOn 𝕜 ω f s) {x : E}
@@ -58,7 +59,7 @@ public lemma ContDiffOn.analyticOnNhd {f : E → F} {s : Set E} (fa : ContDiffOn
     (os : IsOpen s) : AnalyticOnNhd 𝕜 f s :=
   fun x xs ↦ (fa x xs).analyticWithinAt.analyticAt (os.mem_nhds xs)
 
-public lemma AnalyticAt.div_const' {f : E → 𝕜} {c : E} (fa : AnalyticAt 𝕜 f c) {w : 𝕜} :
+public lemma AnalyticAt.div_const {f : E → 𝕜} {c : E} (fa : AnalyticAt 𝕜 f c) {w : 𝕜} :
     AnalyticAt 𝕜 (fun z ↦ f z / w) c := by
   by_cases w0 : w = 0
   · simp only [w0, div_zero, analyticAt_const]
@@ -174,7 +175,6 @@ lemma FormalMultilinearSeries.unshift_coeff_zero (p : FormalMultilinearSeries �
     (p.unshift' c).coeff 0 = c := by
   simp only [FormalMultilinearSeries.coeff, FormalMultilinearSeries.unshift',
     FormalMultilinearSeries.unshift, continuousMultilinearCurryFin0_symm_apply]
-  rfl
 
 @[simp]
 lemma FormalMultilinearSeries.unshift_coeff_succ (p : FormalMultilinearSeries 𝕜 𝕜 E) (c : E)
@@ -215,7 +215,7 @@ lemma FormalMultilinearSeries.unshift_radius' (p : FormalMultilinearSeries 𝕜 
   · refine iSup₂_le ?_; intro r k; refine iSup_le ?_; intro h
     refine le_trans ?_ (le_iSup₂ r (k * ↑r⁻¹))
     have h := fun n ↦ mul_le_mul_of_nonneg_right (h (n + 1)) (NNReal.coe_nonneg r⁻¹)
-    by_cases r0 : r = 0; · simp only [r0, ENNReal.coe_zero, ENNReal.iSup_zero, le_refl]
+    by_cases r0 : r = 0; · simp only [r0, ENNReal.coe_zero, ENNReal.iSup_zero, le_zero_iff]
     simp only [pow_succ, ←mul_assoc _ _ (r:ℝ), mul_assoc _ (r:ℝ) _,
       mul_inv_cancel₀ (NNReal.coe_ne_zero.mpr r0), NNReal.coe_inv, mul_one, p.unshift_norm'] at h
     simp only [NNReal.coe_inv]
@@ -278,12 +278,7 @@ public theorem AnalyticAt.monomial_mul_orderAt {f : 𝕜 → E} {c : 𝕜} (fa :
   have pnz : p ≠ 0 := by
     contrapose fnz
     simpa only [HasFPowerSeriesAt.locally_zero_iff fp, Filter.not_frequently, not_not]
-  have pe : ∃ i, p i ≠ 0 := by
-    contrapose pnz
-    rw [FormalMultilinearSeries.ext_iff]
-    simp only [not_exists, not_not] at pnz
-    intro i
-    simpa only [Pi.zero_apply] using pnz i
+  have pe : ∃ i, p i ≠ 0 := by rw [Function.ne_iff] at pnz; exact pnz
   have pne : ∃ i, (p.unshiftIter n) i ≠ 0 := by
     rcases pe with ⟨i, pi⟩; use n + i
     simp only [FormalMultilinearSeries.ne_zero_iff_coeff_ne_zero] at pi ⊢
@@ -395,7 +390,7 @@ public theorem leadingCoeff_const_smul {f : 𝕜 → E} {c a : 𝕜} :
     simp only [Function.iterate_succ_apply', h, hg]
     funext x; simp only [Function.swap]
     by_cases cx : x = c
-    · simp only [cx, dslope_same, Pi.smul_apply, Pi.smul_def, deriv_fun_const_smul_field]
+    · simp only [cx, dslope_same, Pi.smul_apply, Pi.smul_def, deriv_fun_const_smul']
     · simp only [dslope_of_ne _ cx, Pi.smul_apply, slope, vsub_eq_sub, ← smul_sub, smul_comm _ a]
   simp only [e, Pi.smul_apply]
 
