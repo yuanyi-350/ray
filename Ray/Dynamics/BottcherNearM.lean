@@ -525,9 +525,7 @@ public theorem Super.bottcherNear_mfderiv_ne_zero (s : Super f d a) (c : ℂ) :
   · have u : (fun z : S ↦ extChartAt I a z - extChartAt I a a) =
         extChartAt I a - fun _ : S ↦ extChartAt I a a := rfl
     rw [u, mfderiv_sub, mfderiv_const]
-    · intro h
-      apply extChartAt_mderiv_ne_zero a
-      exact sub_eq_zero.mp h
+    · exact fun h ↦ extChartAt_mderiv_ne_zero a (sub_eq_zero.mp h)
     · exact (contMDiffAt_extChartAt' (mem_chart_source _ a)).mdifferentiableAt one_ne_zero
     · apply mdifferentiableAt_const
 
