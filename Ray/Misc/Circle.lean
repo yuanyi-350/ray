@@ -50,12 +50,9 @@ lemma Circle.arg_neg_one : arg (-1 : Circle).val = π := by
   simp only [neg_def, mul_one, coe_exp, Complex.exp_pi_mul_I, Complex.arg_neg_one]
 
 @[simp] lemma Circle.mem_slitPlane (z : Circle) : z.val ∈ slitPlane ↔ z ≠ -1 := by
-  rw [Complex.mem_slitPlane_iff_arg]
-  have h : z = -1 ↔ z.val.arg = π := by
-    rw [Circle.ext_iff]
-    exact ⟨fun e ↦ by simp [e], fun e ↦
-      (Complex.ext_norm_arg_iff.2 ⟨by simp [Circle.coe_neg], by simpa [Circle.arg_neg_one] using e⟩)⟩
-  simp [h]
+  simp only [Complex.mem_slitPlane_iff_arg, ne_eq, Circle.ext_iff, Complex.ext_norm_arg_iff,
+    norm_zero, Complex.arg_zero, Circle.norm_coe, true_and, one_ne_zero, false_and, not_false_iff,
+    and_true, coe_neg, norm_neg, OneMemClass.coe_one, Complex.arg_neg_one, norm_one]
 
 @[fun_prop] lemma Continuous.circle_exp {f : X → ℝ} (fc : Continuous f) :
     Continuous (fun x ↦ Circle.exp (f x)) := by fun_prop
@@ -142,8 +139,6 @@ public lemma integral_exp_mul_I (n : ℤ) :
     ∫ t in -π..π, exp (n * t * I) = if n = 0 then 2 * π else 0 := by
   by_cases n0 : n = 0
   · simp [n0, two_mul]
-    change (((π + π : ℝ) : ℂ) * 1) = ((π : ℂ) + π)
-    simp
   · have hd : ∀ t : ℝ, HasDerivAt (fun t : ℝ ↦ exp (n * t * I)) (n * I * exp (n * t * I)) t := by
       intro t
       simp only [← mul_assoc, mul_comm _ I]
@@ -153,13 +148,8 @@ public lemma integral_exp_mul_I (n : ℤ) :
       nth_rw 2 [← (by simp : (1 : ℝ) * c = c)]
       exact (hasDerivAt_id t).ofReal_comp.mul_const _
     have d : deriv (fun t : ℝ ↦ exp (n * t * I) / (n * I)) = fun t : ℝ ↦ exp (n * t * I) := by
-      have hn : (n : ℂ) ≠ 0 := by exact_mod_cast n0
-      ext t; calc
-        deriv (fun t : ℝ ↦ exp (n * t * I) / (n * I)) t = n * (I * exp (n * t * I)) / (n * I) := by simpa [mul_assoc] using ((hd t).div_const (n * I)).deriv
-        _ = exp (n * t * I) := by
-          calc
-            n * (I * exp (n * t * I)) / (n * I) = ((n : ℂ) * I * exp (n * t * I)) / (n * I) := by ring
-            _ = exp (n * t * I) := by field_simp [hn]
+      ext t
+      rw [deriv_div_const, (hd t).deriv, mul_div_cancel_left₀ _ (by simp [n0])]
     rw [intervalIntegral.integral_deriv_eq_sub' (E := ℂ) _ d (a := -π) (b := π)]
     · simp only [n0, if_false, mul_assoc, Complex.exp_int_mul, Complex.ofReal_neg, neg_mul,
         Complex.exp_neg, Complex.exp_pi_mul_I, inv_neg, inv_one, sub_self, Complex.ofReal_zero]
@@ -173,12 +163,9 @@ public lemma integral_exp_mul_I (n : ℤ) :
 
 /-- `circleMap` is analytic in `t` -/
 @[fun_prop] theorem analyticAt_circleMap {c : ℂ} {r t : ℝ} : AnalyticAt ℝ (circleMap c r) t := by
-  have hcos : AnalyticAt ℝ (fun θ ↦ (Real.cos θ : ℂ)) t := Complex.analyticAt_ofReal.comp Real.analyticAt_cos
-  have hsin : AnalyticAt ℝ (fun θ ↦ (Real.sin θ : ℂ)) t := Complex.analyticAt_ofReal.comp Real.analyticAt_sin
-  have h : AnalyticAt ℝ (fun θ ↦ c + (r : ℂ) * ((Real.cos θ : ℂ) + (Real.sin θ : ℂ) * I)) t := analyticAt_const.add (analyticAt_const.fun_mul (hcos.add (hsin.fun_mul analyticAt_const)))
-  refine h.congr ?_
-  filter_upwards with θ
-  simp [circleMap, Complex.exp_mul_I, Complex.ofReal_cos, Complex.ofReal_sin]
+  unfold circleMap
+  refine analyticAt_const.add (analyticAt_const.mul (analyticAt_cexp.restrictScalars.comp ?_))
+  exact Complex.analyticAt_ofReal.mul analyticAt_const
 
 /-- The derivative of `circleMap` w.r.t. the radius -/
 lemma HasDerivAt.circleMap_radius {c : ℂ} {r t : ℝ} :
