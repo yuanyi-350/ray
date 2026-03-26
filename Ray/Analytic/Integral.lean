@@ -103,10 +103,10 @@ lemma diffContOnCl (i : Holo f μ s c r) (xs : x ∈ s) : DiffContOnCl ℂ (f x)
 lemma continuousOn_cauchy_integral (i : Holo f μ s c r) :
     ContinuousOn (fun x ↦ ∮ (z : ℂ) in C(c, ↑r), (z - c)⁻¹ ^ n • (z - c)⁻¹ • f x z) s := by
   simp only [circleIntegral, intervalIntegral.integral_of_le Real.two_pi_pos.le]
-  set g : X → ℝ → E := fun x t ↦ (circleMap 0 r t * Complex.I) • (circleMap c r t - c)⁻¹ ^ n •
+  set g : X → ℝ → E := fun x t ↦ deriv (circleMap c r) t • (circleMap c r t - c)⁻¹ ^ n •
       (circleMap c r t - c)⁻¹ • f x (circleMap c r t)
   have ic : ContinuousOn (fun p : X × ℝ ↦ g p.1 p.2) (s ×ˢ univ) := by
-    simp only [g, circleMap_sub_center, circleMap_zero_inv, smul_smul]
+    simp only [g, deriv_circleMap, circleMap_sub_center, circleMap_zero_inv, smul_smul]
     apply ContinuousOn.smul
     · fun_prop
     · have e : (fun p : X × ℝ ↦ f p.1 (circleMap c r p.2)) =
@@ -119,15 +119,16 @@ lemma continuousOn_cauchy_integral (i : Holo f μ s c r) :
   · intro x xs
     apply Continuous.aestronglyMeasurable
     rw [← continuousOn_univ]
-    simpa [g, deriv_circleMap] using ContinuousOn.uncurry_left (f := g) x xs ic
+    exact ContinuousOn.uncurry_left (f := g) x xs ic
   · intro x xs
     refine ae_of_all _ fun t ↦ ?_
-    simp only [circleMap_sub_center, inv_pow, norm_smul, norm_circleMap_zero, NNReal.abs_eq,
-      norm_inv, norm_pow, NNReal.coe_inv, NNReal.coe_pow]
+    simp only [deriv_circleMap, circleMap_sub_center, inv_pow, norm_smul, Complex.norm_mul,
+      norm_circleMap_zero, NNReal.abs_eq, Complex.norm_I, mul_one, norm_inv, norm_pow,
+      NNReal.coe_inv, NNReal.coe_pow]
     bound
   · exact integrableOn_const (by simpa using not_eq_of_beq_eq_false rfl)
   · refine ae_of_all _ fun t ↦ ?_
-    simpa [g, deriv_circleMap] using ContinuousOn.uncurry_right (f := g) t (mem_univ _) ic
+    exact ContinuousOn.uncurry_right (f := g) t (mem_univ _) ic
 
 /-- Applying our Cauchy power series is continuous in `x` -/
 lemma continuousOn_cauchyPowerSeries_apply (i : Holo f μ s c r) {y : ℂ} :
@@ -186,16 +187,10 @@ theorem hasFPowerSeriesOnBall_integral (i : Holo f μ s c r) :
     have e : EqOn (fun x ↦ f x (c + y)) (fun x ↦ ∑' n, a x n) s :=
       fun x xs ↦ (hs x xs).tsum_eq.symm
     rw [setIntegral_congr_fun i.sm e]
-    convert
-      (MeasureTheory.hasSum_integral_of_summable_integral_norm
-        (μ := μ.restrict s) (F := fun n x ↦ a x n)
-        (fun n ↦ i.integrableOn_cauchyPowerSeries_apply (n := n) (y := y)) ?_) using 1
-    · ext n
-      have h := (ContinuousMultilinearMap.integral_apply
-        (μ := μ.restrict s) (φ := fun x ↦ cauchyPowerSeries (f x) c r n)
-        (i.integrableOn_cauchyPowerSeries (n := n)) (fun _ ↦ y))
-      simpa [a, Holo.series] using h
-    · simp only [Metric.eball_coe, Metric.mem_ball, dist_zero_right] at ym
+    simp only [series, ContinuousMultilinearMap.integral_apply i.integrableOn_cauchyPowerSeries]
+    apply MeasureTheory.hasSum_integral_of_summable_integral_norm
+    · exact fun _ ↦ i.integrableOn_cauchyPowerSeries_apply
+    · simp only [Metric.emetric_ball_nnreal, Metric.mem_ball, dist_zero_right] at ym
       exact i.summable_cauchyPowerSeries_apply ym
 
 end Holo
@@ -210,9 +205,7 @@ theorem AnalyticOnNhd.integral_ball {r : ℝ} (fc : ContinuousOn (uncurry f) (s 
     (μs : μ s ≠ ⊤ := by finiteness) : AnalyticOnNhd ℂ (fun z ↦ ∫ x in s, f x z ∂μ) (ball c r) := by
   set r' : ℝ≥0 := ⟨r, r0.le⟩
   set i : Holo f μ s c r' := ⟨r0, sc, μs, fc, fd⟩
-  have e : ball c r = Metric.eball c r' := by
-    rw [Metric.eball_coe]
-    simp [r']
+  have e : ball c r = EMetric.ball c r' := by simp [r']
   rw [e]
   exact i.hasFPowerSeriesOnBall_integral.analyticOnNhd
 
