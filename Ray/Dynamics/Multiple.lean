@@ -77,12 +77,8 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
     have d0 : mfderiv I I (fun z : ℂ ↦ z) 0 ≠ 0 := id_mderiv_ne_zero
     rw [(Filter.EventuallyEq.symm ib).mfderiv_eq] at d0
     rw [←Function.comp_def, mfderiv_comp 0 _ ba.differentiableAt.mdifferentiableAt] at d0
-    simp only [Ne] at d0
-    rw [bottcherNear_zero] at d0
-    intro hi
-    apply d0
-    rw [hi, ContinuousLinearMap.zero_comp]
-    rfl
+    simp only [Ne, mderiv_comp_eq_zero_iff, nc, or_false] at d0
+    rw [bottcherNear_zero] at d0; exact d0
     rw [bottcherNear_zero]; exact ia.mdifferentiableAt (by decide)
   rcases exist_root_of_unity s.d2 with ⟨a, a1, ad⟩
   refine ⟨fun z ↦ i (a * bottcherNear f d z), ?_, ?_, ?_⟩
@@ -197,8 +193,7 @@ public theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDi
       mfderiv_comp _ ((contMDiffAt_extChartAt' _).mdifferentiableAt one_ne_zero) _,
       mfderiv_comp _ fd (((contMDiffOn_extChartAt_symm _).contMDiffAt
       (extChartAt_target_mem_nhds' _)).mdifferentiableAt one_ne_zero),
-      PartialEquiv.left_inv, df, ContinuousLinearMap.zero_comp]
-    exact ContinuousLinearMap.comp_zero _
+      PartialEquiv.left_inv, df, ContinuousLinearMap.zero_comp, ContinuousLinearMap.comp_zero]
     · apply mem_extChartAt_source
     · apply mem_extChartAt_target
     · simp
