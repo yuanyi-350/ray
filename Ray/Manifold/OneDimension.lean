@@ -45,54 +45,22 @@ instance oneDimensionTangentSpaceNormedAddCommGroup (z : S) :
 
 /-- 1D tangent spaces are `NormedSpace`s -/
 instance oneDimensionTangentSpaceNormedSpace (z : S) : NormedSpace ℂ (TangentSpace I z) := by
-  simp only [TangentSpace]; infer_instance
+  change NormedSpace ℂ ℂ
+  infer_instance
 
 /-- The tangent space norm is `abs`, if we unpack types -/
 theorem tangentSpace_norm_eq_complex_norm (z : S) (x : TangentSpace I z) :
     ‖x‖ = Complex.instNorm.norm x := rfl
 
 /-- 1D tangent space maps are (noncanonically!) equivalent to `ℂ` (linear equivalence) -/
-def mderivToScalar' (z : S) (w : T) : (TangentSpace I z →L[ℂ] TangentSpace I w) ≃ₗ[ℂ] ℂ where
-  toFun := by intro x; have y : ℂ →L[ℂ] ℂ := x; exact y 1
-  invFun := by intro x; have y : ℂ →L[ℂ] ℂ := x • ContinuousLinearMap.id ℂ ℂ; exact y
-  map_add' x y := ContinuousLinearMap.add_apply _ _ _
-  map_smul' s x := by
-    simp only [RingHom.id_apply, smul_eq_mul]
-    exact Eq.trans (ContinuousLinearMap.smul_apply _ _ _) (smul_eq_mul _ _)
-  left_inv := by
-    intro x; simp only; apply ContinuousLinearMap.ext; intro s
-    simp only [ContinuousLinearMap.smul_apply, ContinuousLinearMap.id_apply, smul_eq_mul, mul_comm]
-    exact Eq.trans (smul_eq_mul _ _).symm (Eq.trans (ContinuousLinearMap.map_smul _ _ _).symm
-      (congr_arg _ (mul_one _)))
-  right_inv := by
-    intro x
-    simp only [ContinuousLinearMap.smul_apply, ContinuousLinearMap.id_apply, smul_eq_mul, mul_one]
+def mderivToScalar' (z : S) (w : T) : (TangentSpace I z →L[ℂ] TangentSpace I w) ≃ₗ[ℂ] ℂ := by
+  change (ℂ →L[ℂ] ℂ) ≃ₗ[ℂ] ℂ
+  exact ContinuousLinearMap.toSpanSingletonCLE.symm.toLinearEquiv
 
 /-- 1D tangent space maps are (noncanonically!) equivalent to `ℂ` (continuous linear equivalence) -/
-def mderivToScalar (z : S) (w : T) : (TangentSpace I z →L[ℂ] TangentSpace I w) ≃L[ℂ] ℂ where
-  toLinearEquiv := mderivToScalar' z w
-  continuous_toFun := by
-    simp only [mderivToScalar']
-    rw [Metric.continuous_iff]; intro x e ep; use e / 2, half_pos ep; intro y xy
-    simp only [dist_eq_norm] at xy ⊢
-    have b := ContinuousLinearMap.le_of_opNorm_le _ xy.le (1 : ℂ)
-    simp only [tangentSpace_norm_eq_complex_norm, norm_one, mul_one] at b ⊢
-    exact lt_of_le_of_lt b (half_lt_self ep)
-  continuous_invFun := by
-    simp only [mderivToScalar']
-    rw [Metric.continuous_iff]; intro x e ep; use e / 2, half_pos ep; intro y xy
-    simp only [dist_eq_norm] at xy ⊢
-    refine lt_of_le_of_lt ?_ (half_lt_self ep)
-    apply ContinuousLinearMap.opNorm_le_bound' _ (half_pos ep).le; intro s _
-    -- Something's wrong with the type at this point, so rewrite it to make things go through
-    have h : ‖(y • ContinuousLinearMap.id ℂ ℂ - x • ContinuousLinearMap.id ℂ ℂ) s‖ ≤
-        e/2 * ‖s‖ := by
-      rw [ContinuousLinearMap.sub_apply, ContinuousLinearMap.smul_apply,
-        ContinuousLinearMap.smul_apply]
-      simp only [ContinuousLinearMap.id_apply, smul_eq_mul, ← mul_sub_right_distrib, norm_mul,
-        tangentSpace_norm_eq_complex_norm] at xy ⊢
-      bound
-    exact h
+def mderivToScalar (z : S) (w : T) : (TangentSpace I z →L[ℂ] TangentSpace I w) ≃L[ℂ] ℂ := by
+  change (ℂ →L[ℂ] ℂ) ≃L[ℂ] ℂ
+  exact ContinuousLinearMap.toSpanSingletonCLE.symm
 
 /-- Given nonzero `u`, a tangent space map `x` is `0` iff `x u = 0` -/
 theorem mderiv_eq_zero_iff {z : S} {w : T} (f : TangentSpace I z →L[ℂ] TangentSpace I w)
@@ -101,10 +69,18 @@ theorem mderiv_eq_zero_iff {z : S} {w : T} (f : TangentSpace I z →L[ℂ] Tange
   · rw [or_iff_not_imp_right]; intro f0 u0
     apply ContinuousLinearMap.ext; intro v
     simp only [TangentSpace] at f u v u0
-    have e : v = (v * u⁻¹) • u := by simp only [smul_eq_mul, mul_assoc, inv_mul_cancel₀ u0, mul_one]
-    rw [ContinuousLinearMap.zero_apply, e]
-    refine Eq.trans (f.map_smul _ _) ?_
-    rw [smul_eq_zero]; right; exact f0
+    let f' : ℂ →L[ℂ] ℂ := f
+    have hfu : u * f' 1 = f' u := by
+      change (ContinuousLinearMap.toSpanSingleton ℂ (f' 1)) u = f' u
+      exact congrArg (fun g : ℂ →L[ℂ] ℂ => g u) (ContinuousLinearMap.toSpanSingleton_apply_map_one ℂ f')
+    have hfv : v * f' 1 = f' v := by
+      change (ContinuousLinearMap.toSpanSingleton ℂ (f' 1)) v = f' v
+      exact congrArg (fun g : ℂ →L[ℂ] ℂ => g v) (ContinuousLinearMap.toSpanSingleton_apply_map_one ℂ f')
+    have h0 : f' u = 0 := by simpa [f'] using f0
+    rw [← hfu] at h0
+    rw [mul_eq_zero] at h0
+    change f' v = 0
+    rw [← hfv, h0.resolve_left u0, mul_zero]
   · intro h; cases' h with h h
     simp only [h, ContinuousLinearMap.zero_apply]
     simp only [h, ContinuousLinearMap.map_zero]
@@ -158,37 +134,41 @@ public theorem mderiv_comp_ne_zero' {f : T → U} {g : S → T} {x : S} :
 
 /-- Nonzero 1D derivatives are invertible -/
 @[expose] public def mderivEquiv {z : S} {w : T} (f : TangentSpace I z →L[ℂ] TangentSpace I w)
-    (f0 : f ≠ 0) : TangentSpace I z ≃L[ℂ] TangentSpace I w where
-  toFun := f
-  map_add' := f.map_add'
-  map_smul' := f.map_smul'
-  invFun := by
+    (f0 : f ≠ 0) : TangentSpace I z ≃L[ℂ] TangentSpace I w := by
+  change ℂ ≃L[ℂ] ℂ
+  let f' : ℂ →L[ℂ] ℂ := f
+  have f0' : f' ≠ 0 := by simpa [f'] using f0
+  have h1 : f' 1 ≠ 0 := by
+    intro h1
+    apply f0'
+    apply ContinuousLinearMap.ext
     intro x
-    have f' : ℂ →L[ℂ] ℂ := f
-    unfold TangentSpace at f x
-    exact (f' 1)⁻¹ * x
-  left_inv := by
-    generalize hu : (1:ℂ) = u
-    have u0 : u ≠ 0 := by rw [←hu]; norm_num
-    have h := mderiv_ne_zero_iff' (f := f) (u := (u : TangentSpace I z)) u0
-    intro x; simp only [TangentSpace] at f x ⊢
-    have e : f x = (f u) * x := by
-      rw [mul_comm, ← smul_eq_mul, ← f.map_smul, smul_eq_mul, ←hu, mul_one]
-    simp only [e, ← mul_assoc]
-    rw [inv_mul_cancel₀, one_mul]
-    exact h.mpr f0
-  right_inv := by
-    generalize hu : (1:ℂ) = u
-    have u0 : u ≠ 0 := by rw [←hu]; norm_num
-    have h := mderiv_ne_zero_iff' (f := f) (u := (u : TangentSpace I z)) u0
-    intro x; simp only [TangentSpace] at f x ⊢
-    have e : ∀ y : ℂ, f y = (f u) * y := by
-      intro y; rw [mul_comm, ← smul_eq_mul, ← f.map_smul, smul_eq_mul, ←hu, mul_one]
-    rw [e ((f u)⁻¹ * x), ← mul_assoc, mul_inv_cancel₀, one_mul]
-    exact h.mpr f0
-  continuous_toFun := f.cont
-  continuous_invFun := by
-    simp only [TangentSpace] at f ⊢; exact Continuous.mul continuous_const continuous_id
+    have hx : x * f' 1 = f' x := by
+      change (ContinuousLinearMap.toSpanSingleton ℂ (f' 1)) x = f' x
+      exact congrArg (fun g : ℂ →L[ℂ] ℂ => g x) (ContinuousLinearMap.toSpanSingleton_apply_map_one ℂ f')
+    rw [← hx, h1, mul_zero, ContinuousLinearMap.zero_apply]
+  refine
+    { toFun := f'
+      map_add' := f'.map_add'
+      map_smul' := f'.map_smul'
+      invFun := fun x ↦ (f' 1)⁻¹ * x
+      left_inv := ?_
+      right_inv := ?_
+      continuous_toFun := f'.cont
+      continuous_invFun := by exact Continuous.mul continuous_const continuous_id }
+  · intro x
+    have hx : x * f' 1 = f' x := by
+      change (ContinuousLinearMap.toSpanSingleton ℂ (f' 1)) x = f' x
+      exact congrArg (fun g : ℂ →L[ℂ] ℂ => g x) (ContinuousLinearMap.toSpanSingleton_apply_map_one ℂ f')
+    rw [← hx]
+    field_simp [h1]
+  · intro x
+    have hx : ((f' 1)⁻¹ * x) * f' 1 = f' ((f' 1)⁻¹ * x) := by
+      change (ContinuousLinearMap.toSpanSingleton ℂ (f' 1)) ((f' 1)⁻¹ * x) = f' ((f' 1)⁻¹ * x)
+      exact congrArg (fun g : ℂ →L[ℂ] ℂ => g ((f' 1)⁻¹ * x))
+        (ContinuousLinearMap.toSpanSingleton_apply_map_one ℂ f')
+    rw [← hx]
+    field_simp [h1]
 
 public theorem mderivEquiv_apply {z : S} {w : T} {f : TangentSpace I z →L[ℂ] TangentSpace I w}
     (f0 : f ≠ 0) (x : TangentSpace I z) : mderivEquiv f f0 x = f x := by rfl
@@ -206,22 +186,27 @@ public theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := 
     apply ((isOpen_extChartAt_target z).eventually_mem (mem_extChartAt_target z)).mp
     refine .of_forall fun w m ↦ ?_
     simp only [id, PartialEquiv.right_inv _ m]
-  simp only [e.fderiv_eq, fderiv_id, Ne, ContinuousLinearMap.ext_iff, not_forall,
-    ContinuousLinearMap.id_apply, Function.comp_def]
-  use 1, one_ne_zero
+  simp only [e.fderiv_eq, fderiv_id, Ne, Function.comp_def]
+  intro h
+  have h1 := congrArg (fun f : ℂ →L[ℂ] ℂ ↦ f 1) h
+  change (1 : ℂ) = 0 at h1
+  exact one_ne_zero h1
 
 /-- Critical points of iterations are precritical points -/
 public theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : ContMDiff I I ω f)
     (c : Critical f^[n] z) : Precritical f z := by
   induction' n with n h
-  · rw [Function.iterate_zero, Critical, mfderiv_id, ← ContinuousLinearMap.opNorm_zero_iff,
-      ContinuousLinearMap.norm_id] at c
-    norm_num at c
+  · have hc : ContinuousLinearMap.id ℂ (TangentSpace I z) = 0 := by
+      simpa [Critical, Function.iterate_zero, mfderiv_id] using c
+    have hid := id_mderiv_ne_zero (z := z)
+    change mfderiv I I id z ≠ 0 at hid
+    rw [mfderiv_id] at hid
+    exact (hid hc).elim
   · rw [Function.iterate_succ', Critical,
       mfderiv_comp z ((fa _).mdifferentiableAt (by decide))
-       ((fa.iterate _ _).mdifferentiableAt (by decide)),
-      mderiv_comp_eq_zero_iff] at c
-    cases' c with c c; use n, c; exact h c
+       ((fa.iterate _ _).mdifferentiableAt (by decide))] at c
+    have hc := (mderiv_comp_eq_zero_iff _ _).mp c
+    cases' hc with hc hc; exact ⟨n, hc⟩; exact h hc
 
 variable [IsManifold I ω S] [IsManifold I ω T] [IsManifold I ω U]
 
@@ -229,21 +214,31 @@ variable [IsManifold I ω S] [IsManifold I ω T] [IsManifold I ω U]
 public theorem extChartAt_mderiv_ne_zero' {z w : S} (m : w ∈ (extChartAt I z).source) :
     mfderiv I I (extChartAt I z) w ≠ 0 := by
   rcases exists_ne (0 : TangentSpace I z) with ⟨t, t0⟩
-  rw [← mderiv_ne_zero_iff' t0]; contrapose t0
-  have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_left_inverse m) t
-  simp only [ContinuousLinearMap.comp_apply] at h
-  rw [←h.trans (ContinuousLinearMap.id_apply _), ContinuousLinearMap.apply_eq_zero_of_eq_zero]
-  exact t0
+  have ht : mfderiv I I (extChartAt I z) w t ≠ 0 := by
+    intro h0
+    have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_left_inverse m) t
+    simp only [ContinuousLinearMap.comp_apply] at h
+    rw [h0] at h
+    simp only [ContinuousLinearMap.map_zero] at h
+    exact t0 h.symm
+  intro h0
+  have hz : mfderiv I I (extChartAt I z) w t = (0 : TangentSpace I w →L[ℂ] TangentSpace I (extChartAt I z w)) t := by rw [h0]
+  exact ht (by simpa using hz)
 
 /-- Chart derivatives are nonzero -/
 public theorem extChartAt_symm_mderiv_ne_zero' {z : S} {w : ℂ} (m : w ∈ (extChartAt I z).target) :
     mfderiv I I (extChartAt I z).symm w ≠ 0 := by
   rcases exists_ne (0 : TangentSpace I (extChartAt I z z)) with ⟨t, t0⟩
-  rw [← mderiv_ne_zero_iff' t0]; contrapose t0
-  have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_right_inverse m) t
-  simp only [ContinuousLinearMap.comp_apply] at h
-  rw [←h.trans (ContinuousLinearMap.id_apply _), ContinuousLinearMap.apply_eq_zero_of_eq_zero]
-  exact t0
+  have ht : mfderiv I I (extChartAt I z).symm w t ≠ 0 := by
+    intro h0
+    have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_right_inverse m) t
+    simp only [ContinuousLinearMap.comp_apply] at h
+    rw [h0] at h
+    simp only [ContinuousLinearMap.map_zero] at h
+    exact t0 h.symm
+  intro h0
+  have hz : mfderiv I I (extChartAt I z).symm w t = (0 : TangentSpace I w →L[ℂ] TangentSpace I ((extChartAt I z).symm w)) t := by rw [h0]
+  exact ht (by simpa using hz)
 
 /-- Chart derivatives are nonzero -/
 public theorem extChartAt_mderiv_ne_zero (z : S) : mfderiv I I (extChartAt I z) z ≠ 0 :=
@@ -326,12 +321,21 @@ public theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
     mfderiv_comp_of_eq (fa.along_snd.mdifferentiableAt (by decide))
       (((contMDiffOn_extChartAt_symm _).contMDiffAt
         (extChartAt_target_mem_nhds' m')).mdifferentiableAt WithTop.top_ne_zero)]
-  · simp only [mderiv_comp_eq_zero_iff, Function.comp]
-    rw [(extChartAt I z).left_inv m]
-    simp only [extChartAt_mderiv_ne_zero' fm, false_or]
+  · rw [(extChartAt I z).left_inv m]
     constructor
-    · intro h; left; exact h
-    · intro h; cases' h with h h; exact h; simpa only using extChartAt_symm_mderiv_ne_zero' m' h
+    · intro h
+      rw [h, ContinuousLinearMap.zero_comp]
+      simpa using
+        (mfderiv I I (extChartAt I (f c z)) ((f e ∘ (extChartAt I z).symm) (extChartAt I z w))).comp_zero
+    · intro h
+      rcases (mderiv_comp_eq_zero_iff _ _).mp h with h | h
+      · have h' : mfderiv I I (extChartAt I (f c z)) (f e w) = 0 := by
+          rw [Function.comp, (extChartAt I z).left_inv m] at h
+          exact h
+        exact False.elim ((extChartAt_mderiv_ne_zero' fm) h')
+      · rcases (mderiv_comp_eq_zero_iff _ _).mp h with h | h
+        · exact h
+        · exact False.elim ((extChartAt_symm_mderiv_ne_zero' m') h)
   · exact PartialEquiv.left_inv _ m
   · simp only [Function.comp, PartialEquiv.left_inv _ m]
 
