@@ -613,7 +613,8 @@ theorem unevenSeries_analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : 
       have xs' : dist x z1 < s' := by
         have hs : edist x z1 < ENNReal.ofReal s' :=
           lt_of_lt_of_le (by simpa only [Metric.mem_eball, s] using xs) (min_le_right _ _)
-        have hs' : ENNReal.ofReal (dist x z1) < ENNReal.ofReal s' := by simpa only [edist_dist] using hs
+        have hs' : ENNReal.ofReal (dist x z1) < ENNReal.ofReal s' := by
+          exact Eq.mp (congrFun' (congrArg LT.lt (edist_dist x z1)) (ENNReal.ofReal s')) hs
         exact (ENNReal.ofReal_lt_ofReal_iff_of_nonneg dist_nonneg).mp hs'
       simp only [Metric.mem_ball] at z1s ⊢
       calc dist x c1
