@@ -969,15 +969,13 @@ lemma small_volume_eq_integral_c (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) (z
       IsScalarTower.right ℂ _ _ _ IsScalarTower.right _ _ _ (dt w).hasFDerivAt
     rw [← ti, MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul (μ := volume)
       (hf' := fun w _ ↦ (dt' w).hasFDerivWithinAt)]
-    · rw [show (ContinuousLinearMap.restrictScalars ℝ (ContinuousLinearMap.toSpanSingleton ℂ ↑z)).det = z ^ 2 by
-        rw [show ContinuousLinearMap.restrictScalars ℝ (ContinuousLinearMap.toSpanSingleton ℂ ↑z) = z • (1 : ℂ →L[ℝ] ℂ) by
-          ext w; change w * (z : ℂ) = z • w; rw [Algebra.smul_def]; simp [mul_comm]]
-        simp [ContinuousLinearMap.det, LinearMap.det_smul]]; simp [Real.norm_eq_abs, abs_of_pos z0]
-      have hs : ∫ x in annulus_cc 0 (r / z) (s / z), z ^ 2 • ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2) = ∫ x in annulus_cc 0 (r / z) (s / z), ((z : ℂ) ^ 2) * ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2) := by refine MeasureTheory.integral_congr_ae ?_; filter_upwards with x; norm_num [Algebra.smul_def]
-      have hi := MeasureTheory.integral_const_mul (μ := volume.restrict (annulus_cc 0 (r / z) (s / z))) ((z : ℂ) ^ 2) (fun x : ℂ ↦ ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2))
-      calc ∫ x in annulus_cc 0 (r / z) (s / z), z ^ 2 • ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2) = ∫ x in annulus_cc 0 (r / z) (s / z), ((z : ℂ) ^ 2) * ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2) := hs
-        _ = ((z : ℂ) ^ 2) * ∫ x in annulus_cc 0 (r / z) (s / z), ((↑‖deriv i.g (t x)‖ : ℂ) ^ 2) := hi
-        _ = ↑z ^ 2 * ∫ w in annulus_cc 0 (r / z) (s / z), i.integrand w ↑z := by apply congr_arg₂ _ rfl; refine MeasureTheory.integral_congr_ae ?_; filter_upwards with w; simp [integrand, t, si]
+    · simp only [Complex.restrictScalars_toSpanSingleton, ContinuousLinearMap.det,
+        Real.norm_eq_abs, abs_of_pos z0, MeasureTheory.integral_smul]
+      refine congr_arg₂ (fun a b => a * b) (by norm_num) ?_
+      apply congrArg
+      ext w
+      simpa only [Complex.ofRealCLM_apply, Complex.ofReal_pow, integrand, t, map_one,
+        Complex.conj_ofReal, mul_assoc, mul_one] using si (w * ↑z)
     · exact measurableSet_annulus_cc
     · exact (mul_left_injective₀ z0').injOn
   · exact i.integrable_sq_norm r1
