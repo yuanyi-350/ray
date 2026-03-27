@@ -109,18 +109,11 @@ lemma continuousOn_cauchy_integral (i : Holo f μ s c r) :
     simp only [g, circleMap_sub_center, circleMap_zero_inv, smul_smul]
     refine ContinuousOn.smul ?_ ?_
     · refine ContinuousOn.mul ?_ ?_
-      · exact
-          ((contDiff_circleMap c r : ContDiff ℝ 2 (circleMap c r)).continuous_deriv
-            (by norm_num)).comp_continuousOn continuousOn_snd
-      · fun_prop
-    · simpa only [Function.comp_apply, uncurry] using
-        i.fc.comp
-        (by
-          fun_prop : ContinuousOn (fun p : X × ℝ ↦ (p.1, circleMap c r p.2)) (s ×ˢ univ))
-        (by
-          intro p hp
-          rcases hp with ⟨ps, _⟩
-          simp [circleMap, ps])
+    refine ContinuousOn.smul (ContinuousOn.mul (((contDiff_circleMap c r :
+      ContDiff ℝ 2 (circleMap c r)).continuous_deriv (by norm_num)).comp_continuousOn
+      continuousOn_snd) (by fun_prop)) ?_
+    exact i.fc.comp (by fun_prop : ContinuousOn (fun p : X × ℝ ↦ (p.1, circleMap c r p.2))
+      (s ×ˢ univ)) fun p hp ↦ by simpa [circleMap] using hp
   apply MeasureTheory.continuousOn_of_dominated (bound := fun _ ↦ r * ((r ^ n)⁻¹ * (r⁻¹ * i.C)))
   · intro x xs
     apply Continuous.aestronglyMeasurable
