@@ -70,10 +70,8 @@ theorem mderiv_eq_zero_iff {z : S} {w : T} (f : TangentSpace I z →L[ℂ] Tange
     simp only [TangentSpace] at f u v u0
     let f' : ℂ →L[ℂ] ℂ := f
     have hfu : u * f' 1 = f' u := by
-      change (ContinuousLinearMap.toSpanSingleton ℂ (f' 1)) u = f' u
       exact congrArg (fun g : ℂ →L[ℂ] ℂ => g u) (ContinuousLinearMap.toSpanSingleton_apply_map_one ℂ f')
     have hfv : v * f' 1 = f' v := by
-      change (ContinuousLinearMap.toSpanSingleton ℂ (f' 1)) v = f' v
       exact congrArg (fun g : ℂ →L[ℂ] ℂ => g v) (ContinuousLinearMap.toSpanSingleton_apply_map_one ℂ f')
     have h0 : f' u = 0 := by simpa [f'] using f0
     rw [← hfu] at h0
