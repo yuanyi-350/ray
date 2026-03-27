@@ -685,30 +685,25 @@ lemma integral_term_diag (i : Gronwall f) (r : ℝ) (n m : ℕ) :
     ∫ t in -π..π, i.term r n m t = if n = m then i.term_diag r n else 0 := by
   by_cases nm : n = m
   · subst nm
-    have h :
-        ∫ t in -π..π, i.term r n n t =
-          ((1 - (n : ℂ)) * I * i.coeff n * conj (i.coeff n) * (r : ℂ) ^ 2 / (r : ℂ) ^ (n + n)) *
-            ∫ t in -π..π, exp (((n : ℤ) - n) * t * I) := by
-      exact intervalIntegral.integral_const_mul
+    trans
+      ((1 - (n : ℂ)) * I * i.coeff n * conj (i.coeff n) * (r : ℂ) ^ 2 / (r : ℂ) ^ (n + n)) *
+        ∫ t in -π..π, exp (((n : ℤ) - n) * t * I)
+    · exact intervalIntegral.integral_const_mul
         (((1 - (n : ℂ)) * I * i.coeff n * conj (i.coeff n) * (r : ℂ) ^ 2 / (r : ℂ) ^ (n + n)))
         (fun t : ℝ => exp (((n : ℤ) - n) * t * I))
-    have hi : ∫ t in -π..π, exp (((n : ℤ) - n) * t * I) = 2 * π := by
-      simpa using integral_exp_mul_I ((n : ℤ) - n)
-    rw [h, hi]
-    simp [term_diag, ← Complex.conj_mul', two_mul]
-    ring_nf
-  · have hmn : ((m : ℤ) - n) ≠ 0 := by simpa [sub_eq_zero] using mt Eq.symm nm
-    have h :
-        ∫ t in -π..π, i.term r n m t =
-          ((1 - (n : ℂ)) * I * i.coeff n * conj (i.coeff m) * (r : ℂ) ^ 2 / (r : ℂ) ^ (n + m)) *
-            ∫ t in -π..π, exp (((m : ℤ) - n) * t * I) := by
-      exact intervalIntegral.integral_const_mul
+    · simp [term_diag, ← Complex.conj_mul', two_mul]
+      erw [_root_.Algebra.smul_def]
+      simp
+      ring_nf
+  · trans
+      ((1 - (n : ℂ)) * I * i.coeff n * conj (i.coeff m) * (r : ℂ) ^ 2 / (r : ℂ) ^ (n + m)) *
+        ∫ t in -π..π, exp (((m : ℤ) - n) * t * I)
+    · exact intervalIntegral.integral_const_mul
         (((1 - (n : ℂ)) * I * i.coeff n * conj (i.coeff m) * (r : ℂ) ^ 2 / (r : ℂ) ^ (n + m)))
         (fun t : ℝ => exp (((m : ℤ) - n) * t * I))
-    have hi : ∫ t in -π..π, exp (((m : ℤ) - n) * t * I) = 0 := by
-      simpa [hmn] using integral_exp_mul_I ((m : ℤ) - n)
-    rw [h, hi]
-    simp [nm]
+    · rw [if_neg nm, mul_eq_zero]
+      right
+      simpa [eq_comm, nm, sub_eq_zero, Nat.cast_inj] using integral_exp_mul_I ((m : ℤ) - n)
 
 /-- Drop all but the diagonal, if offdiagonals are zero -/
 @[simp] lemma tsum_diag {f : ι → ℂ} {d : (n m : ι) → Decidable (n = m)} :
