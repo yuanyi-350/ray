@@ -113,11 +113,8 @@ public lemma ContDiffOn.norm_deriv_le_div_of_mapsTo_unit_ball (fa : ContDiffOn �
     simpa [slope, ← div_eq_inv_mul, norm_sub_rev (f w), norm_sub_rev w]
   have dc : ContinuousAt (fun w ↦ ‖1 - conj (f z) * f w‖ / ‖1 - conj z * w‖) z :=
     ContinuousAt.div
-      (by
-        simpa using
-          (ContinuousAt.norm
-            (ContinuousAt.sub continuousAt_const
-              (ContinuousAt.const_mul df.continuousAt (conj (f z))))))
+      (by simpa using (ContinuousAt.norm <| continuousAt_const.sub <| df.continuousAt.const_mul
+        (conj (f z))))
       (by fun_prop) (norm_mobius_denom_pos z1 z1).ne'
   have t1 := (continuous_norm.tendsto _).comp df.hasDerivAt.tendsto_slope
   have t2 := dc.tendsto
