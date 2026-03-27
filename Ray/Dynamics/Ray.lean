@@ -292,7 +292,7 @@ public theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     refine ((continuousAt_const.prodMk (Complex.continuous_ofReal.continuousAt.mul
         continuousAt_const)).eventually
         (eqn_unique e0 er ?_ (mul_ne_zero t0 x00))).mp (.of_forall fun u e ↦ ?_)
-    · change s.ray c (↑t * x0) = r c (↑t * x0); rw [← hr]
+    · rw [← hr]
       change s.ray c (↑t * x0) = s.ray c (x1 / x0 * (↑t * x0))
       rw [xe]
       simpa [u] using e

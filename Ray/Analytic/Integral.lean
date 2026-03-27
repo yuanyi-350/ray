@@ -107,8 +107,6 @@ lemma continuousOn_cauchy_integral (i : Holo f μ s c r) :
       (circleMap c r t - c)⁻¹ • f x (circleMap c r t)
   have ic : ContinuousOn (fun p : X × ℝ ↦ g p.1 p.2) (s ×ˢ univ) := by
     simp only [g, circleMap_sub_center, circleMap_zero_inv, smul_smul]
-    refine ContinuousOn.smul ?_ ?_
-    · refine ContinuousOn.mul ?_ ?_
     refine ContinuousOn.smul (ContinuousOn.mul (((contDiff_circleMap c r :
       ContDiff ℝ 2 (circleMap c r)).continuous_deriv (by norm_num)).comp_continuousOn
       continuousOn_snd) (by fun_prop)) ?_

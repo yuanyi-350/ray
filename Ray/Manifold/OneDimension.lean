@@ -54,12 +54,10 @@ theorem tangentSpace_norm_eq_complex_norm (z : S) (x : TangentSpace I z) :
 
 /-- 1D tangent space maps are (noncanonically!) equivalent to `ℂ` (linear equivalence) -/
 def mderivToScalar' (z : S) (w : T) : (TangentSpace I z →L[ℂ] TangentSpace I w) ≃ₗ[ℂ] ℂ := by
-  change (ℂ →L[ℂ] ℂ) ≃ₗ[ℂ] ℂ
   exact ContinuousLinearMap.toSpanSingletonCLE.symm.toLinearEquiv
 
 /-- 1D tangent space maps are (noncanonically!) equivalent to `ℂ` (continuous linear equivalence) -/
 def mderivToScalar (z : S) (w : T) : (TangentSpace I z →L[ℂ] TangentSpace I w) ≃L[ℂ] ℂ := by
-  change (ℂ →L[ℂ] ℂ) ≃L[ℂ] ℂ
   exact ContinuousLinearMap.toSpanSingletonCLE.symm
 
 /-- Given nonzero `u`, a tangent space map `x` is `0` iff `x u = 0` -/
@@ -67,7 +65,8 @@ theorem mderiv_eq_zero_iff {z : S} {w : T} (f : TangentSpace I z →L[ℂ] Tange
     (u : TangentSpace I z) : f u = 0 ↔ f = 0 ∨ u = 0 := by
   constructor
   · rw [or_iff_not_imp_right]; intro f0 u0
-    apply ContinuousLinearMap.ext; intro v
+    apply ContinuousLinearMap.ext
+    intro v
     simp only [TangentSpace] at f u v u0
     let f' : ℂ →L[ℂ] ℂ := f
     have hfu : u * f' 1 = f' u := by
@@ -144,7 +143,6 @@ public theorem mderiv_comp_ne_zero' {f : T → U} {g : S → T} {x : S} :
     apply ContinuousLinearMap.ext
     intro x
     have hx : x * f' 1 = f' x := by
-      change (ContinuousLinearMap.toSpanSingleton ℂ (f' 1)) x = f' x
       exact congrArg (fun g : ℂ →L[ℂ] ℂ => g x) (ContinuousLinearMap.toSpanSingleton_apply_map_one ℂ f')
     rw [← hx, h1, mul_zero, ContinuousLinearMap.zero_apply]
   refine
@@ -158,13 +156,11 @@ public theorem mderiv_comp_ne_zero' {f : T → U} {g : S → T} {x : S} :
       continuous_invFun := by exact Continuous.mul continuous_const continuous_id }
   · intro x
     have hx : x * f' 1 = f' x := by
-      change (ContinuousLinearMap.toSpanSingleton ℂ (f' 1)) x = f' x
       exact congrArg (fun g : ℂ →L[ℂ] ℂ => g x) (ContinuousLinearMap.toSpanSingleton_apply_map_one ℂ f')
     rw [← hx]
     field_simp [h1]
   · intro x
     have hx : ((f' 1)⁻¹ * x) * f' 1 = f' ((f' 1)⁻¹ * x) := by
-      change (ContinuousLinearMap.toSpanSingleton ℂ (f' 1)) ((f' 1)⁻¹ * x) = f' ((f' 1)⁻¹ * x)
       exact congrArg (fun g : ℂ →L[ℂ] ℂ => g ((f' 1)⁻¹ * x))
         (ContinuousLinearMap.toSpanSingleton_apply_map_one ℂ f')
     rw [← hx]
@@ -189,7 +185,6 @@ public theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := 
   simp only [e.fderiv_eq, fderiv_id, Ne, Function.comp_def]
   intro h
   have h1 := congrArg (fun f : ℂ →L[ℂ] ℂ ↦ f 1) h
-  change (1 : ℂ) = 0 at h1
   exact one_ne_zero h1
 
 /-- Critical points of iterations are precritical points -/
