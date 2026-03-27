@@ -780,28 +780,21 @@ lemma large_volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
   simp only [Complex.ofReal_inv, Complex.ofReal_ofNat, map_mul, Complex.conj_I, mul_neg,
     intervalIntegral.integral_neg, ← mul_assoc]
   simp only [mul_comm _ I, ← mul_assoc, ← neg_mul]
-  convert (i.summable_gronwall_c
-    (by rwa [Complex.norm_real, Real.norm_eq_abs, abs_of_pos (by linarith)])).hasSum using 1
-  calc
-    -2⁻¹ * ∫ (x : ℝ) in -π..π, I * w.dfe x * (starRingEnd ℂ) (w.fe x)
-        = -2⁻¹ * ∫ (x : ℝ) in -π..π, I * ∑' (p : ℕ × ℕ), i.term r p.1 p.2 x := by
-          simpa [mul_assoc] using congrArg
-            (fun g : ℝ → ℂ => -2⁻¹ * ∫ x in -π..π, I * g x)
-            (funext fun x ↦ ((is w x).tsum_eq).symm)
-    _ = -2⁻¹ * (I * ∫ (x : ℝ) in -π..π, ∑' (p : ℕ × ℕ), i.term r p.1 p.2 x) := by
-          exact congrArg (fun z : ℂ => (-2⁻¹) * z) <| intervalIntegral.integral_const_mul
-            (a := -π) (b := π) (μ := volume) I (fun x : ℝ => ∑' (p : ℕ × ℕ), i.term r p.1 p.2 x)
-    _ = (-2⁻¹ * I) * ∫ (x : ℝ) in -π..π, ∑' (p : ℕ × ℕ), i.term r p.1 p.2 x := by ring
-    _ = (-2⁻¹ * I) * ∑' n, i.term_diag r n := by
-          rw [← sum_integral_comm.tsum_eq]
-          simp [i.integral_term_diag, tsum_diag]
-    _ = ∑' (b : ℕ), i.gronwall_c (↑r) b := by
-          rw [← tsum_mul_left]
-          refine tsum_congr ?_
-          intro b
-          unfold term_diag gronwall_c
-          ring_nf
-          simp [Complex.I_sq]
+  conv in (∫ x in -π..π, I * w.dfe x * (starRingEnd ℂ) (w.fe x)) =>
+    enter [1, x]
+    simp only [mul_assoc, ← (is w x).tsum_eq]
+  conv in (∫ x in -π..π, I * ∑' (b : ℕ × ℕ), i.term r b.1 b.2 x) =>
+    tactic => exact (intervalIntegral.integral_const_mul I
+      (fun x : ℝ => ∑' (b : ℕ × ℕ), i.term r b.1 b.2 x))
+  simp only [mul_comm _ I, ← mul_assoc]
+  conv in (∫ _ in _.._, ∑' (_ : ℕ × ℕ), _) =>
+    tactic => exact sum_integral_comm.tsum_eq.symm
+  simp only [i.integral_term_diag, tsum_diag]
+  rw [← tsum_mul_left]
+  simpa only [term_diag, gronwall_c, mul_comm _ I, ← mul_assoc, div_eq_mul_inv, mul_neg,
+    neg_mul, Complex.I_mul_I, neg_neg, one_mul, inv_mul_cancel₀ (by norm_num : (2 : ℂ) ≠ 0)] using
+    (i.summable_gronwall_c
+      (by rwa [Complex.norm_real, Real.norm_eq_abs, abs_of_pos (by linarith)])).hasSum
 
 /-!
 ### Large areas restated as an analytic function
