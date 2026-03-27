@@ -50,8 +50,7 @@ public lemma AnalyticWithinAt.analyticAt {f : E → F} {s : Set E} {x : E}
   have yr' : ‖y‖ₑ < r := lt_of_lt_of_le yr (min_le_left _ _)
   have ye : ‖y‖ < e := by
     have ye' : ‖y‖ₑ < ENNReal.ofReal e := lt_of_lt_of_le yr (min_le_right _ _)
-    rw [ENNReal.lt_ofReal_iff_toReal_lt enorm_ne_top, toReal_enorm] at ye'
-    exact ye'
+    rwa [ENNReal.lt_ofReal_iff_toReal_lt enorm_ne_top, toReal_enorm] at ye'
   exact fp.hasSum (.inr (es (by simpa [Metric.mem_ball, dist_eq_norm, sub_eq_add_neg, add_assoc]
     using ye))) (by simpa [Metric.mem_eball, edist_zero_right] using yr')
 

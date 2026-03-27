@@ -63,8 +63,7 @@ public lemma Complex.norm_one_sub_cpow_sub_one_le_rpow_sub_one {a : ℝ} (z1 : �
   trans ‖(1 - x * (1 : ℂ)) ^ (a : ℂ) - 1‖
   · rw [i w w1, i 1 (by simp)]
     simp only [mul_neg, intervalIntegral.integral_neg, norm_neg, mul_assoc, mul_one]
-    simp_rw [← smul_eq_mul]
-    rw [intervalIntegral.integral_smul, intervalIntegral.integral_smul, norm_smul, norm_smul,
+    simp_rw [← smul_eq_mul, intervalIntegral.integral_smul, norm_smul,
       Complex.norm_real, Real.norm_eq_abs]
     have e : EqOn (fun t : ℝ ↦ (1 - (t : ℂ)) ^ (a - 1 : ℂ)) (fun t ↦ (((1 - t) ^ (a - 1) : ℝ) : ℂ))
         (uIcc 0 x) := by

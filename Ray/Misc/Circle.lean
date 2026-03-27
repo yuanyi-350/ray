@@ -50,10 +50,8 @@ lemma Circle.arg_neg_one : arg (-1 : Circle).val = π := by
   simp only [neg_def, mul_one, coe_exp, Complex.exp_pi_mul_I, Complex.arg_neg_one]
 
 @[simp] lemma Circle.mem_slitPlane (z : Circle) : z.val ∈ slitPlane ↔ z ≠ -1 := by
-  simp only [Complex.mem_slitPlane_iff_arg, ne_eq, Circle.ext_iff, Complex.ext_norm_arg_iff,
-    norm_zero, Complex.arg_zero, Circle.norm_coe, true_and, one_ne_zero, false_and,
-    not_false_iff, and_true, coe_neg, norm_neg]
-  rw [show ((-↑(1 : Circle) : ℂ)).arg = π by simp]
+  simp [Complex.mem_slitPlane_iff_arg, ne_eq, Circle.ext_iff, Complex.ext_norm_arg_iff,
+    norm_zero, Complex.arg_zero, true_and, one_ne_zero, false_and, and_true, coe_neg, norm_neg]
 
 @[fun_prop] lemma Continuous.circle_exp {f : X → ℝ} (fc : Continuous f) :
     Continuous (fun x ↦ Circle.exp (f x)) := by fun_prop
@@ -153,10 +151,7 @@ public lemma integral_exp_mul_I (n : ℤ) :
       exact (hasDerivAt_id t).ofReal_comp.mul_const _
     have d : deriv (fun t : ℝ ↦ exp (n * t * I) / (n * I)) = fun t : ℝ ↦ exp (n * t * I) := by
       ext t
-      have h : HasDerivAt (fun t : ℝ ↦ exp (n * t * I) / (n * I))
-          ((n * I * exp (n * t * I)) / (n * I)) t :=
-        HasDerivAt.div_const (hd t) (n * I)
-      rw [h.deriv]
+      rw [(HasDerivAt.div_const (hd t) (n * I)).deriv]
       field_simp [n0]
     rw [intervalIntegral.integral_deriv_eq_sub' (E := ℂ) _ d (a := -π) (b := π)]
     · simp only [n0, if_false, mul_assoc, Complex.exp_int_mul, Complex.ofReal_neg, neg_mul,
