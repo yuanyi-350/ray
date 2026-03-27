@@ -108,21 +108,19 @@ lemma continuousOn_cauchy_integral (i : Holo f μ s c r) :
   have ic : ContinuousOn (fun p : X × ℝ ↦ g p.1 p.2) (s ×ˢ univ) := by
     simp only [g, circleMap_sub_center, circleMap_zero_inv, smul_smul]
     refine ContinuousOn.smul ?_ ?_
-    ·
-      convert (show ContinuousOn
-          (fun x : X × ℝ ↦ (circleMap 0 r x.2 * Complex.I) *
-            (circleMap 0 (↑r)⁻¹ (-x.2) ^ n * circleMap 0 (↑r)⁻¹ (-x.2))) (s ×ˢ univ) by
-          fun_prop) using 1
-      ext x
-      exact congrArg
-        (fun z ↦ z * (circleMap 0 (↑r)⁻¹ (-x.2) ^ n * circleMap 0 (↑r)⁻¹ (-x.2)))
-        (deriv_circleMap c r x.2)
-    · have e : (fun p : X × ℝ ↦ f p.1 (circleMap c r p.2)) =
-        uncurry f ∘ fun p : X × ℝ ↦ (p.1, circleMap c r p.2) := rfl
-      rw [e]
-      refine i.fc.comp (by fun_prop) ?_
-      intro p ⟨ps, _⟩
-      simp [circleMap, ps]
+    · refine ContinuousOn.mul ?_ ?_
+      · exact
+          ((contDiff_circleMap c r : ContDiff ℝ 2 (circleMap c r)).continuous_deriv
+            (by norm_num)).comp_continuousOn continuousOn_snd
+      · fun_prop
+    · simpa only [Function.comp_apply, uncurry] using
+        i.fc.comp
+        (by
+          fun_prop : ContinuousOn (fun p : X × ℝ ↦ (p.1, circleMap c r p.2)) (s ×ˢ univ))
+        (by
+          intro p hp
+          rcases hp with ⟨ps, _⟩
+          simp [circleMap, ps])
   apply MeasureTheory.continuousOn_of_dominated (bound := fun _ ↦ r * ((r ^ n)⁻¹ * (r⁻¹ * i.C)))
   · intro x xs
     apply Continuous.aestronglyMeasurable
